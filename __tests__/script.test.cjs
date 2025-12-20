@@ -1,6 +1,7 @@
 const {
   getNextUpcomingRow_,
   buildEmailBody_,
+  buildEmailSubject_,
   sendEmailToRecipients_,
 } = require("../script.js");
 
@@ -71,6 +72,32 @@ describe("buildEmailBody", () => {
     expect(html).toContain("https://docs.google.com/spreadsheets/d/SHEET123/edit?usp=sharing");
     expect(html).toContain("<strong>Description:</strong> Desc");
     expect(html).toContain("<strong>Location:</strong> Loc");
+  });
+});
+
+describe("buildEmailSubject", () => {
+  beforeEach(() => {
+    global.Session = {
+      getScriptTimeZone: () => "UTC",
+    };
+
+    global.Utilities = {
+      formatDate: (date, tz, fmt) => {
+        if (!(date instanceof Date)) throw new Error("Expected Date");
+        if (tz !== "UTC") throw new Error("Expected UTC");
+        if (fmt !== "MM-dd") throw new Error("Expected MM-dd");
+        return "12-17";
+      },
+    };
+  });
+
+  test("returns TBD when row is null", () => {
+    expect(buildEmailSubject_(null)).toBe("Mendez/Williams City Group {Date: TBD} Reminder");
+  });
+
+  test("formats subject as Mendez/Williams City Group {Date: 12-17} Reminder", () => {
+    const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "Loc", "Food", "Duty"];
+    expect(buildEmailSubject_(row)).toBe("Mendez/Williams City Group {Date: 12-17} Reminder");
   });
 });
 

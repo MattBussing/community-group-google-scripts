@@ -103,6 +103,27 @@ function buildEmailBody_(k) {
   return htmlBody;
 }
 
+/**
+ * Builds the email subject for a schedule row.
+ *
+ * Format: "Mendez/Williams City Group {Date: 12-17} Reminder".
+ * Uses the script timezone and forces the time to midday to reduce
+ * timezone-related day shifts.
+ *
+ * @param {Array<any>|null} k Row values from the Schedule sheet
+ * @returns {string} Email subject
+ */
+function buildEmailSubject_(k) {
+  if (!k) return "Mendez/Williams City Group {Date: TBD} Reminder";
+
+  // Force midday to avoid timezone shifts.
+  var rowDate = new Date(k[0]);
+  rowDate.setHours(12, 0, 0, 0); // midday
+
+  var formattedDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "MM-dd");
+  return `Mendez/Williams City Group {Date: ${formattedDate}} Reminder`;
+}
+
 // -----------------------------------------------------------------------------
 // Recipient lookup
 // -----------------------------------------------------------------------------
@@ -228,8 +249,9 @@ function sendScheduledEmailFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
   var emailBody = buildEmailBody_(nextRow);
+  var subject = buildEmailSubject_(nextRow);
   var recipients = getEmailRecipients_();
-  sendEmailToRecipients_("Upcoming Event Info", emailBody, recipients);
+  sendEmailToRecipients_(subject, emailBody, recipients);
 }
 
 /**
@@ -243,8 +265,9 @@ function testSendScheduledEmailFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
   var emailBody = buildEmailBody_(nextRow);
+  var subject = buildEmailSubject_(nextRow);
   var recipients = getTestEmailRecipients_();
-  sendEmailToRecipients_("Upcoming Event Info", emailBody, recipients);
+  sendEmailToRecipients_(subject, emailBody, recipients);
 }
 
 // -----------------------------------------------------------------------------
@@ -254,6 +277,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     getNextUpcomingRow_,
     buildEmailBody_,
+    buildEmailSubject_,
     sendEmailToRecipients_,
     getEmailRecipients_,
     getSheetData_,
