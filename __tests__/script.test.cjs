@@ -49,6 +49,7 @@ describe("buildEmailBody", () => {
         if (!(date instanceof Date)) throw new Error("Expected Date");
         if (tz !== "UTC") throw new Error("Expected UTC");
         if (!fmt) throw new Error("Expected format");
+        if (fmt === "MM-dd") return "12-17";
         return "FORMATTED_DATE";
       },
     };
@@ -72,6 +73,14 @@ describe("buildEmailBody", () => {
     expect(html).toContain("https://docs.google.com/spreadsheets/d/SHEET123/edit?usp=sharing");
     expect(html).toContain("<strong>Description:</strong> Desc");
     expect(html).toContain("<strong>Location:</strong> Loc");
+  });
+
+  test("returns NO GROUP message when location is No Group", () => {
+    const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "No Group", "Food", "Duty"];
+    const body = buildEmailBody_(row);
+
+    expect(body).toBe("NO GROUP for Mendez/Williams City Group on 12-17");
+    expect(body).not.toContain("https://docs.google.com/spreadsheets/d/");
   });
 });
 
@@ -98,6 +107,11 @@ describe("buildEmailSubject", () => {
   test("formats subject as Reminder for Mendez/Williams City Group on 12-17", () => {
     const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "Loc", "Food", "Duty"];
     expect(buildEmailSubject_(row)).toBe("Reminder for Mendez/Williams City Group on 12-17");
+  });
+
+  test("formats subject as NO GROUP for Mendez/Williams City Group on 12-17 when location is No Group", () => {
+    const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "No Group", "Food", "Duty"];
+    expect(buildEmailSubject_(row)).toBe("NO GROUP for Mendez/Williams City Group on 12-17");
   });
 });
 

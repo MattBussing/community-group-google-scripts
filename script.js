@@ -67,6 +67,20 @@ function getNextUpcomingRow_(data) {
   return null; // no upcoming row within 7 days
 }
 
+/**
+ * Returns true when the schedule row represents a "No Group" meeting.
+ *
+ * Convention: Location column (index 2) contains the string "No Group".
+ *
+ * @param {Array<any>|null} k Row values from the Schedule sheet
+ * @returns {boolean}
+ */
+function isNoGroupRow_(k) {
+  if (!k) return false;
+  var location = (k[2] || "").toString().trim().toLowerCase();
+  return location === "no group";
+}
+
 // -----------------------------------------------------------------------------
 // Email content
 // -----------------------------------------------------------------------------
@@ -81,6 +95,13 @@ function getNextUpcomingRow_(data) {
  */
 function buildEmailBody_(k) {
   if (!k) return "No upcoming events found.";
+
+  if (isNoGroupRow_(k)) {
+    var noGroupDate = new Date(k[0]);
+    noGroupDate.setHours(12, 0, 0, 0); // midday
+    var noGroupFormattedDate = Utilities.formatDate(noGroupDate, Session.getScriptTimeZone(), "MM-dd");
+    return `NO GROUP for Mendez/Williams City Group on ${noGroupFormattedDate}`;
+  }
 
   // Force midday to avoid timezone shifts.
   var rowDate = new Date(k[0]);
@@ -115,6 +136,13 @@ function buildEmailBody_(k) {
  */
 function buildEmailSubject_(k) {
   if (!k) return "Reminder for Mendez/Williams City Group";
+
+  if (isNoGroupRow_(k)) {
+    var noGroupDate = new Date(k[0]);
+    noGroupDate.setHours(12, 0, 0, 0); // midday
+    var noGroupFormattedDate = Utilities.formatDate(noGroupDate, Session.getScriptTimeZone(), "MM-dd");
+    return `NO GROUP for Mendez/Williams City Group on ${noGroupFormattedDate}`;
+  }
 
   // Force midday to avoid timezone shifts.
   var rowDate = new Date(k[0]);
@@ -276,6 +304,7 @@ function testSendScheduledEmailFromSheet() {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     getNextUpcomingRow_,
+    isNoGroupRow_,
     buildEmailBody_,
     buildEmailSubject_,
     sendEmailToRecipients_,

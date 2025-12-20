@@ -35,6 +35,12 @@ Goals:
 - The email subject is built by `buildEmailSubject_(row)`.
 - Current required format:
   - `Reminder for Mendez/Williams City Group on MM-dd`
+  - If Location is `No Group` (case-insensitive), use:
+    - `NO GROUP for Mendez/Williams City Group on MM-dd`
+
+### Body special-case
+- If Location is `No Group` (case-insensitive), `buildEmailBody_(row)` should return the single-line message:
+  - `NO GROUP for Mendez/Williams City Group on MM-dd`
 
 ### Public entry points (triggers)
 - `sendScheduledEmailFromSheet()`: production send; reads recipients from `Emails` sheet.
