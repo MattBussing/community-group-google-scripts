@@ -1,5 +1,11 @@
-// Store the Sheet ID in Apps Script PropertiesService under key: SHEET_ID
-// (keeps identifiers out of source control).
+/**
+ * Gets the Google Sheet ID from Script Properties.
+ *
+ * Script property key: `SHEET_ID`.
+ *
+ * @returns {string} Spreadsheet ID
+ * @throws {Error} If `SHEET_ID` is not configured
+ */
 function getSheetId_() {
   var sheetId = PropertiesService.getScriptProperties().getProperty("SHEET_ID");
   if (!sheetId) {
@@ -15,11 +21,17 @@ function getSheetId_() {
 var ScheduleSheetName = "Schedule";
 var EmailSheetName = "Emails";
 
-// todo have to set up the spreedsheet time zone
+// Note: Date formatting uses the script timezone (Project Settings → Time zone).
 
-// ------------------------
-// 1. Get sheet data
-// ------------------------
+// -----------------------------------------------------------------------------
+// Sheet access
+// -----------------------------------------------------------------------------
+/**
+ * Loads all values from a named sheet within the configured spreadsheet.
+ *
+ * @param {string} sheetName Sheet tab name
+ * @returns {Array<Array<any>>} 2D array of values (rows x columns)
+ */
 function getSheetData_(sheetName) {
   var ss = SpreadsheetApp.openById(getSheetId_());
   var sheet = ss.getSheetByName(sheetName);
@@ -27,16 +39,24 @@ function getSheetData_(sheetName) {
   return sheet.getDataRange().getValues(); // 2D array
 }
 
-// ------------------------
-// 2. Find the next upcoming k
-// ------------------------
+// -----------------------------------------------------------------------------
+// Schedule lookup
+// -----------------------------------------------------------------------------
+/**
+ * Finds the first upcoming row in the next 7 days.
+ *
+ * Expects column A (index 0) to contain a date value. Skips the header row.
+ *
+ * @param {Array<Array<any>>} data 2D array of Schedule sheet values
+ * @returns {Array<any>|null} First matching row, or null if none
+ */
 function getNextUpcomingRow_(data) {
   var today = new Date();
 
   var maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + 7); // 7 days from today
 
-  for (var i = 1; i < data.length; i++) { // skip header
+  for (var i = 1; i < data.length; i++) { // Skip header row.
     var k = data[i];
     var rowDate = new Date(k[0]);
     if (rowDate >= today && rowDate <= maxDate) {
@@ -47,13 +67,22 @@ function getNextUpcomingRow_(data) {
   return null; // no upcoming row within 7 days
 }
 
-// ------------------------
-// 3. Build email body from k (Option 2: force midday to avoid timezone issues)
-// ------------------------
+// -----------------------------------------------------------------------------
+// Email content
+// -----------------------------------------------------------------------------
+/**
+ * Builds the HTML email body for a schedule row.
+ *
+ * Uses the script timezone to format the date and forces the time to midday
+ * to reduce timezone-related day shifts.
+ *
+ * @param {Array<any>|null} k Row values from the Schedule sheet
+ * @returns {string} HTML email body
+ */
 function buildEmailBody_(k) {
   if (!k) return "No upcoming events found.";
 
-  // Convert date and force midday to avoid timezone shifts
+  // Force midday to avoid timezone shifts.
   var rowDate = new Date(k[0]);
   rowDate.setHours(12, 0, 0, 0); // midday
 
@@ -74,15 +103,22 @@ function buildEmailBody_(k) {
   return htmlBody;
 }
 
-// ------------------------
-// 4. Load emails from 'Emails' sheet
-// ------------------------
+// -----------------------------------------------------------------------------
+// Recipient lookup
+// -----------------------------------------------------------------------------
+/**
+ * Loads recipient emails from the configured Emails sheet.
+ *
+ * Expects emails in column A, with a header in the first row.
+ *
+ * @returns {string[]} Email addresses
+ */
 function getEmailRecipients_() {
   var data = getSheetData_(EmailSheetName);
   var emails = [];
 
-  for (var i = 1; i < data.length; i++) { // skip header
-    var email = data[i][0]; // assume column A has email addresses
+  for (var i = 1; i < data.length; i++) { // Skip header row.
+    var email = data[i][0]; // Column A
     if (email) {
       emails.push(email);
     }
@@ -91,8 +127,15 @@ function getEmailRecipients_() {
   return emails;
 }
 
-// Store test recipients in Apps Script PropertiesService under key: TEST_EMAIL_RECIPIENTS
-// Value format: comma-separated list (e.g. "a@example.com,b@example.com").
+/**
+ * Loads test recipients from Script Properties.
+ *
+ * Script property key: `TEST_EMAIL_RECIPIENTS`.
+ * Value format: comma-separated list (e.g. "a@example.com,b@example.com").
+ *
+ * @returns {string[]} Email addresses
+ * @throws {Error} If `TEST_EMAIL_RECIPIENTS` is not configured
+ */
 function getTestEmailRecipients_() {
   var value = PropertiesService.getScriptProperties().getProperty("TEST_EMAIL_RECIPIENTS");
   if (!value) {
@@ -107,6 +150,14 @@ function getTestEmailRecipients_() {
     .filter(function (e) { return !!e; });
 }
 
+/**
+ * Best-effort email validation.
+ *
+ * This is a practical check (not full RFC compliance) to catch obvious issues.
+ *
+ * @param {string} email Email address to validate
+ * @returns {boolean} True if the email looks valid
+ */
 function isValidEmail_(email) {
   if (!email) return false;
   if (email.length > 320) return false;
@@ -114,9 +165,20 @@ function isValidEmail_(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ------------------------
-// 5. Send email to multiple recipients
-// ------------------------
+// -----------------------------------------------------------------------------
+// Sending
+// -----------------------------------------------------------------------------
+/**
+ * Sends a single HTML email to all valid recipients using the 'to' field.
+ *
+ * Invalid recipients are logged and excluded. If there are no valid recipients,
+ * no email is sent.
+ *
+ * @param {string} subject Email subject
+ * @param {string} body HTML body
+ * @param {Array<any>} recipients Array of recipient values (strings preferred)
+ * @returns {void}
+ */
 function sendEmailToRecipients_(subject, body, recipients) {
   if (!recipients || recipients.length === 0) {
     Logger.log("No email recipients provided.");
@@ -152,9 +214,16 @@ function sendEmailToRecipients_(subject, body, recipients) {
   });
 }
 
-// ------------------------
-// 6. Main function
-// ------------------------
+// -----------------------------------------------------------------------------
+// Entry points
+// -----------------------------------------------------------------------------
+/**
+ * Entry point: reads schedule + recipients from sheets and sends the email.
+ *
+ * Intended for time-based triggers.
+ *
+ * @returns {void}
+ */
 function sendScheduledEmailFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
@@ -163,6 +232,13 @@ function sendScheduledEmailFromSheet() {
   sendEmailToRecipients_("Upcoming Event Info", emailBody, recipients);
 }
 
+/**
+ * Entry point: same as sendScheduledEmailFromSheet but uses `TEST_EMAIL_RECIPIENTS`.
+ *
+ * Useful for manually testing delivery without emailing the full group.
+ *
+ * @returns {void}
+ */
 function testSendScheduledEmailFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
@@ -171,9 +247,9 @@ function testSendScheduledEmailFromSheet() {
   sendEmailToRecipients_("Upcoming Event Info", emailBody, recipients);
 }
 
-// ------------------------
+// -----------------------------------------------------------------------------
 // Node/test exports (no-op in Apps Script)
-// ------------------------
+// -----------------------------------------------------------------------------
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     getNextUpcomingRow_,
