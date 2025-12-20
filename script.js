@@ -18,6 +18,26 @@ function getSheetId_() {
   return sheetId;
 }
 
+/**
+ * Gets the GroupMe Bot ID from Script Properties.
+ *
+ * Script property key: `GROUPME_BOT_ID`.
+ *
+ * @returns {string} GroupMe bot id
+ * @throws {Error} If `GROUPME_BOT_ID` is not configured
+ */
+function getGroupMeBotId_() {
+  var botId = PropertiesService.getScriptProperties().getProperty("GROUPME_BOT_ID");
+  if (!botId) {
+    throw new Error(
+      "Missing script property GROUPME_BOT_ID. Create a bot at https://dev.groupme.com/bots " +
+      "and set it in Project Settings → Script properties."
+    );
+  }
+
+  return botId;
+}
+
 var ScheduleSheetName = "Schedule";
 var EmailSheetName = "Emails";
 
@@ -263,6 +283,38 @@ function sendEmailToRecipients_(subject, body, recipients) {
   });
 }
 
+/**
+ * Posts a message to a GroupMe group via the Bot API.
+ *
+ * Uses Script Property `GROUPME_BOT_ID`.
+ * Endpoint: https://api.groupme.com/v3/bots/post
+ *
+ * @param {string} text Message text
+ * @returns {void}
+ */
+function postGroupMeMessage_(text) {
+  var message = (text || "").toString().trim();
+  if (!message) {
+    Logger.log("No GroupMe message text provided.");
+    return;
+  }
+
+  var botId = getGroupMeBotId_();
+
+  var url = "https://api.groupme.com/v3/bots/post";
+  var payload = {
+    bot_id: botId,
+    text: message
+  };
+
+  UrlFetchApp.fetch(url, {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+}
+
 // -----------------------------------------------------------------------------
 // Entry points
 // -----------------------------------------------------------------------------
@@ -298,6 +350,23 @@ function testSendScheduledEmailFromSheet() {
   sendEmailToRecipients_(subject, emailBody, recipients);
 }
 
+/**
+ * Entry point: posts the upcoming reminder message to GroupMe.
+ *
+ * The message content matches the email subject (including the NO GROUP case).
+ * Intended for time-based triggers.
+ *
+ * Requires script property `GROUPME_BOT_ID`.
+ *
+ * @returns {void}
+ */
+function postGroupMeReminderFromSheet() {
+  var scheduleData = getSheetData_(ScheduleSheetName);
+  var nextRow = getNextUpcomingRow_(scheduleData);
+  var message = buildEmailSubject_(nextRow);
+  postGroupMeMessage_(message);
+}
+
 // -----------------------------------------------------------------------------
 // Node/test exports (no-op in Apps Script)
 // -----------------------------------------------------------------------------
@@ -308,6 +377,9 @@ if (typeof module !== "undefined" && module.exports) {
     buildEmailBody_,
     buildEmailSubject_,
     sendEmailToRecipients_,
+    getGroupMeBotId_,
+    postGroupMeMessage_,
+    postGroupMeReminderFromSheet,
     getEmailRecipients_,
     getSheetData_,
     getSheetId_
