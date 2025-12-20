@@ -19,6 +19,7 @@ Goals:
   - `SHEET_ID`: Spreadsheet ID containing the `Schedule` and `Emails` tabs.
   - `TEST_EMAIL_RECIPIENTS`: Comma-separated emails used by `testSendScheduledEmailFromSheet()`.
   - `GROUPME_BOT_ID`: Bot id used to post messages via the GroupMe Bot API.
+  - `TEST_GROUPME_BOT_ID`: Bot id used by the GroupMe test posting entry point.
 
 ### Node/Jest (local testing)
 - Tests run in Node, so Apps Script globals are **mocked** in Jest.
@@ -47,11 +48,14 @@ Goals:
 - `sendScheduledEmailFromSheet()`: production send; reads recipients from `Emails` sheet.
 - `testSendScheduledEmailFromSheet()`: test send; reads recipients from `TEST_EMAIL_RECIPIENTS`.
 - `postGroupMeReminderFromSheet()`: posts the same text as the email subject to GroupMe (requires `GROUPME_BOT_ID`).
+- `testPostGroupMeReminderFromSheet()`: posts to GroupMe using `TEST_GROUPME_BOT_ID`.
 
 ## GroupMe Bot setup
 - Create a bot at https://dev.groupme.com/bots (pick the target group).
 - Copy the bot's `bot_id` into Script Properties as `GROUPME_BOT_ID`.
+- (Optional) Create a separate bot for testing and set `TEST_GROUPME_BOT_ID`.
 - Run `postGroupMeReminderFromSheet()` manually once to verify posting.
+- Use `testPostGroupMeReminderFromSheet()` to test without posting to the main group.
 
 ### Exports for tests
 - `script.js` conditionally exports helpers when `module.exports` is available.

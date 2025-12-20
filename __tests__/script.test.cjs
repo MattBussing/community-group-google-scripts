@@ -4,6 +4,7 @@ const {
   buildEmailSubject_,
   sendEmailToRecipients_,
   postGroupMeMessage_,
+  postGroupMeMessageWithBotId_,
 } = require("../script.js");
 
 function makeDateDaysFromNow(daysFromNow) {
@@ -193,5 +194,23 @@ describe("postGroupMeMessage", () => {
 
     const parsed = JSON.parse(options.payload);
     expect(parsed).toEqual({ bot_id: "BOT123", text: "Hello GroupMe" });
+  });
+});
+
+describe("postGroupMeMessageWithBotId", () => {
+  beforeEach(() => {
+    global.Logger = {
+      log: jest.fn(),
+    };
+
+    global.UrlFetchApp = {
+      fetch: jest.fn(),
+    };
+  });
+
+  test("does not post when bot id is empty", () => {
+    postGroupMeMessageWithBotId_("", "Hello");
+    expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
+    expect(global.Logger.log).toHaveBeenCalledWith("No GroupMe bot id provided.");
   });
 });
