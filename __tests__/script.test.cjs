@@ -1,0 +1,117 @@
+const {
+  getNextUpcomingRow,
+  buildEmailBody,
+  sendEmailToRecipients,
+} = require("../script.js");
+
+function makeDateDaysFromNow(daysFromNow) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+describe("getNextUpcomingRow", () => {
+  test("returns first row within next 7 days (skips header)", () => {
+    const data = [
+      ["Date", "Description", "Location", "Food", "Childcare"],
+      [makeDateDaysFromNow(10), "too far", "loc", "food", "cc"],
+      [makeDateDaysFromNow(2), "soon", "loc", "food", "cc"],
+      [makeDateDaysFromNow(1), "even sooner but later in sheet", "loc", "food", "cc"],
+    ];
+
+    const row = getNextUpcomingRow(data);
+    expect(row[1]).toBe("soon");
+  });
+
+  test("returns null when no rows fall in window", () => {
+    const data = [
+      ["Date", "Description"],
+      [makeDateDaysFromNow(-1), "past"],
+      [makeDateDaysFromNow(8), "too late"],
+    ];
+
+    expect(getNextUpcomingRow(data)).toBeNull();
+  });
+});
+
+describe("buildEmailBody", () => {
+  beforeEach(() => {
+    // Minimal mocks for Apps Script globals used by buildEmailBody
+    global.Session = {
+      getScriptTimeZone: () => "UTC",
+    };
+
+    global.Utilities = {
+      formatDate: (date, tz, fmt) => {
+        // Keep assertion surface small: just ensure we were given a Date.
+        if (!(date instanceof Date)) throw new Error("Expected Date");
+        if (tz !== "UTC") throw new Error("Expected UTC");
+        if (!fmt) throw new Error("Expected format");
+        return "FORMATTED_DATE";
+      },
+    };
+
+    global.PropertiesService = {
+      getScriptProperties: () => ({
+        getProperty: (key) => (key === "SHEET_ID" ? "SHEET123" : null),
+      }),
+    };
+  });
+
+  test("returns friendly message on null input", () => {
+    expect(buildEmailBody(null)).toBe("No upcoming events found.");
+  });
+
+  test("includes formatted date and signup url", () => {
+    const row = [new Date("2025-12-25T00:00:00Z"), "Desc", "Loc", "Food", "Duty"];
+    const html = buildEmailBody(row);
+
+    expect(html).toContain("FORMATTED_DATE");
+    expect(html).toContain("https://docs.google.com/spreadsheets/d/SHEET123/edit?usp=sharing");
+    expect(html).toContain("<strong>Description:</strong> Desc");
+    expect(html).toContain("<strong>Location:</strong> Loc");
+  });
+});
+
+describe("sendEmailToRecipients", () => {
+  beforeEach(() => {
+    global.MailApp = {
+      sendEmail: jest.fn(),
+    };
+
+    global.Logger = {
+      log: jest.fn(),
+    };
+  });
+
+  test("does not send when recipients list is empty", () => {
+    sendEmailToRecipients("Sub", "Body", []);
+    expect(global.MailApp.sendEmail).not.toHaveBeenCalled();
+    expect(global.Logger.log).toHaveBeenCalledWith("No email recipients provided.");
+  });
+
+  test("sends all recipients in the 'to' field and does not set bcc", () => {
+    sendEmailToRecipients("Sub", "Body", ["a@test.com", "b@test.com"]);
+
+    expect(global.MailApp.sendEmail).toHaveBeenCalledTimes(1);
+    const payload = global.MailApp.sendEmail.mock.calls[0][0];
+
+    expect(payload.to).toBe("a@test.com,b@test.com");
+    expect(payload.bcc).toBeUndefined();
+    expect(payload.subject).toBe("Sub");
+    expect(payload.htmlBody).toBe("Body");
+  });
+
+  test("logs invalid recipients but still sends to the valid ones", () => {
+    sendEmailToRecipients("Sub", "Body", ["a@test.com", "not-an-email", "b@test.com"]);
+
+    expect(global.MailApp.sendEmail).toHaveBeenCalledTimes(1);
+    const payload = global.MailApp.sendEmail.mock.calls[0][0];
+    expect(payload.to).toBe("a@test.com,b@test.com");
+
+    expect(global.Logger.log).toHaveBeenCalledWith(
+      expect.stringContaining("Invalid email recipients provided")
+    );
+  });
+});
