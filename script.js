@@ -20,7 +20,7 @@ var EmailSheetName = "Emails";
 // ------------------------
 // 1. Get sheet data
 // ------------------------
-function getSheetData(sheetName) {
+function getSheetData_(sheetName) {
   var ss = SpreadsheetApp.openById(getSheetId_());
   var sheet = ss.getSheetByName(sheetName);
 
@@ -30,7 +30,7 @@ function getSheetData(sheetName) {
 // ------------------------
 // 2. Find the next upcoming k
 // ------------------------
-function getNextUpcomingRow(data) {
+function getNextUpcomingRow_(data) {
   var today = new Date();
 
   var maxDate = new Date(today);
@@ -50,7 +50,7 @@ function getNextUpcomingRow(data) {
 // ------------------------
 // 3. Build email body from k (Option 2: force midday to avoid timezone issues)
 // ------------------------
-function buildEmailBody(k) {
+function buildEmailBody_(k) {
   if (!k) return "No upcoming events found.";
 
   // Convert date and force midday to avoid timezone shifts
@@ -77,8 +77,8 @@ function buildEmailBody(k) {
 // ------------------------
 // 4. Load emails from 'Emails' sheet
 // ------------------------
-function getEmailRecipients() {
-  var data = getSheetData(EmailSheetName);
+function getEmailRecipients_() {
+  var data = getSheetData_(EmailSheetName);
   var emails = [];
 
   for (var i = 1; i < data.length; i++) { // skip header
@@ -117,7 +117,7 @@ function isValidEmail_(email) {
 // ------------------------
 // 5. Send email to multiple recipients
 // ------------------------
-function sendEmailToRecipients(subject, body, recipients) {
+function sendEmailToRecipients_(subject, body, recipients) {
   if (!recipients || recipients.length === 0) {
     Logger.log("No email recipients provided.");
     return;
@@ -156,19 +156,19 @@ function sendEmailToRecipients(subject, body, recipients) {
 // 6. Main function
 // ------------------------
 function sendScheduledEmailFromSheet() {
-  var scheduleData = getSheetData(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow(scheduleData);
-  var emailBody = buildEmailBody(nextRow);
-  var recipients = getEmailRecipients();
-  sendEmailToRecipients("Upcoming Event Info", emailBody, recipients);
+  var scheduleData = getSheetData_(ScheduleSheetName);
+  var nextRow = getNextUpcomingRow_(scheduleData);
+  var emailBody = buildEmailBody_(nextRow);
+  var recipients = getEmailRecipients_();
+  sendEmailToRecipients_("Upcoming Event Info", emailBody, recipients);
 }
 
 function testSendScheduledEmailFromSheet() {
-  var scheduleData = getSheetData(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow(scheduleData);
-  var emailBody = buildEmailBody(nextRow);
+  var scheduleData = getSheetData_(ScheduleSheetName);
+  var nextRow = getNextUpcomingRow_(scheduleData);
+  var emailBody = buildEmailBody_(nextRow);
   var recipients = getTestEmailRecipients_();
-  sendEmailToRecipients("Upcoming Event Info", emailBody, recipients);
+  sendEmailToRecipients_("Upcoming Event Info", emailBody, recipients);
 }
 
 // ------------------------
@@ -176,11 +176,11 @@ function testSendScheduledEmailFromSheet() {
 // ------------------------
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    getNextUpcomingRow,
-    buildEmailBody,
-    sendEmailToRecipients,
-    getEmailRecipients,
-    getSheetData,
+    getNextUpcomingRow_,
+    buildEmailBody_,
+    sendEmailToRecipients_,
+    getEmailRecipients_,
+    getSheetData_,
     getSheetId_
   };
 }

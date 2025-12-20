@@ -1,7 +1,7 @@
 const {
-  getNextUpcomingRow,
-  buildEmailBody,
-  sendEmailToRecipients,
+  getNextUpcomingRow_,
+  buildEmailBody_,
+  sendEmailToRecipients_,
 } = require("../script.js");
 
 function makeDateDaysFromNow(daysFromNow) {
@@ -20,7 +20,7 @@ describe("getNextUpcomingRow", () => {
       [makeDateDaysFromNow(1), "even sooner but later in sheet", "loc", "food", "cc"],
     ];
 
-    const row = getNextUpcomingRow(data);
+    const row = getNextUpcomingRow_(data);
     expect(row[1]).toBe("soon");
   });
 
@@ -31,7 +31,7 @@ describe("getNextUpcomingRow", () => {
       [makeDateDaysFromNow(8), "too late"],
     ];
 
-    expect(getNextUpcomingRow(data)).toBeNull();
+    expect(getNextUpcomingRow_(data)).toBeNull();
   });
 });
 
@@ -60,12 +60,12 @@ describe("buildEmailBody", () => {
   });
 
   test("returns friendly message on null input", () => {
-    expect(buildEmailBody(null)).toBe("No upcoming events found.");
+    expect(buildEmailBody_(null)).toBe("No upcoming events found.");
   });
 
   test("includes formatted date and signup url", () => {
     const row = [new Date("2025-12-25T00:00:00Z"), "Desc", "Loc", "Food", "Duty"];
-    const html = buildEmailBody(row);
+    const html = buildEmailBody_(row);
 
     expect(html).toContain("FORMATTED_DATE");
     expect(html).toContain("https://docs.google.com/spreadsheets/d/SHEET123/edit?usp=sharing");
@@ -86,13 +86,13 @@ describe("sendEmailToRecipients", () => {
   });
 
   test("does not send when recipients list is empty", () => {
-    sendEmailToRecipients("Sub", "Body", []);
+    sendEmailToRecipients_("Sub", "Body", []);
     expect(global.MailApp.sendEmail).not.toHaveBeenCalled();
     expect(global.Logger.log).toHaveBeenCalledWith("No email recipients provided.");
   });
 
   test("sends all recipients in the 'to' field and does not set bcc", () => {
-    sendEmailToRecipients("Sub", "Body", ["a@test.com", "b@test.com"]);
+    sendEmailToRecipients_("Sub", "Body", ["a@test.com", "b@test.com"]);
 
     expect(global.MailApp.sendEmail).toHaveBeenCalledTimes(1);
     const payload = global.MailApp.sendEmail.mock.calls[0][0];
@@ -104,7 +104,7 @@ describe("sendEmailToRecipients", () => {
   });
 
   test("logs invalid recipients but still sends to the valid ones", () => {
-    sendEmailToRecipients("Sub", "Body", ["a@test.com", "not-an-email", "b@test.com"]);
+    sendEmailToRecipients_("Sub", "Body", ["a@test.com", "not-an-email", "b@test.com"]);
 
     expect(global.MailApp.sendEmail).toHaveBeenCalledTimes(1);
     const payload = global.MailApp.sendEmail.mock.calls[0][0];
