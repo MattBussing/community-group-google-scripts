@@ -92,12 +92,12 @@ describe("buildEmailSubject", () => {
   });
 
   test("returns TBD when row is null", () => {
-    expect(buildEmailSubject_(null)).toBe("Mendez/Williams City Group {Date: TBD} Reminder");
+    expect(buildEmailSubject_(null)).toBe("Reminder for Mendez/Williams City Group");
   });
 
-  test("formats subject as Mendez/Williams City Group {Date: 12-17} Reminder", () => {
+  test("formats subject as Reminder for Mendez/Williams City Group on 12-17", () => {
     const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "Loc", "Food", "Duty"];
-    expect(buildEmailSubject_(row)).toBe("Mendez/Williams City Group {Date: 12-17} Reminder");
+    expect(buildEmailSubject_(row)).toBe("Reminder for Mendez/Williams City Group on 12-17");
   });
 });
 

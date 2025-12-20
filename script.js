@@ -106,7 +106,7 @@ function buildEmailBody_(k) {
 /**
  * Builds the email subject for a schedule row.
  *
- * Format: "Mendez/Williams City Group {Date: 12-17} Reminder".
+ * Format: "Reminder for Mendez/Williams City Group on 12-17".
  * Uses the script timezone and forces the time to midday to reduce
  * timezone-related day shifts.
  *
@@ -114,14 +114,14 @@ function buildEmailBody_(k) {
  * @returns {string} Email subject
  */
 function buildEmailSubject_(k) {
-  if (!k) return "Mendez/Williams City Group {Date: TBD} Reminder";
+  if (!k) return "Reminder for Mendez/Williams City Group";
 
   // Force midday to avoid timezone shifts.
   var rowDate = new Date(k[0]);
   rowDate.setHours(12, 0, 0, 0); // midday
 
   var formattedDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "MM-dd");
-  return `Mendez/Williams City Group {Date: ${formattedDate}} Reminder`;
+  return `Reminder for Mendez/Williams City Group on ${formattedDate}`;
 }
 
 // -----------------------------------------------------------------------------
