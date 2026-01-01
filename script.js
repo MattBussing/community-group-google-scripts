@@ -10,8 +10,7 @@ function getSheetId_() {
   var sheetId = PropertiesService.getScriptProperties().getProperty("SHEET_ID");
   if (!sheetId) {
     throw new Error(
-      "Missing script property SHEET_ID. Run initSheetIdFromActiveSpreadsheet() (if container-bound) " +
-      "or set it in Project Settings → Script properties."
+      "Missing script property SHEET_ID. Set it in Project Settings → Script properties."
     );
   }
 
@@ -512,11 +511,14 @@ function sendNotif() {
  * Entry point: test variant that sends email and posts to GroupMe test bot.
  *
  * Test recipients are loaded from `TEST_EMAIL_RECIPIENTS` and posting uses `TEST_GROUPME_BOT_ID`.
+ * Optionally honors a base date override via Script Property `TEST_BASE_DATE`.
+ * Supported formats include mm/dd/yy, mm/dd/yyyy, and yyyy-mm-dd.
  *
  * @returns {void}
  */
 function testSendNotif() {
-  var optBaseDate = new Date(12/10/2025);
+  var baseProp = PropertiesService.getScriptProperties().getProperty("TEST_BASE_DATE");
+  var optBaseDate = baseProp ? parseBaseDate_(baseProp) : undefined;
   performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: true, optBaseDate: optBaseDate });
 }
 

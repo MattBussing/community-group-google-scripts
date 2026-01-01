@@ -20,6 +20,9 @@ Goals:
   - `TEST_EMAIL_RECIPIENTS`: Comma-separated emails used by `testSendNotif()`.
   - `GROUPME_BOT_ID`: Bot id used to post messages via the GroupMe Bot API.
   - `TEST_GROUPME_BOT_ID`: Bot id used by the GroupMe test posting entry point.
+ - **Script Properties (optional test-only)**:
+   - `TEST_BASE_DATE`: Base date override used by `testSendNotif()` to select the window for the next upcoming row.
+     Accepts `mm/dd/yy`, `mm/dd/yyyy`, or `yyyy-mm-dd`.
 
 ### Node/Jest (local testing)
 - Tests run in Node, so Apps Script globals are **mocked** in Jest.
@@ -46,7 +49,8 @@ Goals:
 
 ### Public entry points (triggers)
 - `sendNotif()`: production combined send; emails via `Emails` sheet and posts to GroupMe using `GROUPME_BOT_ID`.
-- `testSendNotif()`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`. No arguments.
+- `testSendNotif()`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`.
+  Optionally honors Script Property `TEST_BASE_DATE` to set the base date used when selecting the next upcoming row.
 
 ## GroupMe Bot setup
 - Create a bot at https://dev.groupme.com/bots (pick the target group).
