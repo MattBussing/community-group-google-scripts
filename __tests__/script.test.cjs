@@ -2,6 +2,7 @@ const {
   getNextUpcomingRow_,
   buildEmailBody_,
   buildEmailSubject_,
+  buildGroupMeMessage_,
   sendEmailToRecipients_,
   postGroupMeMessageWithBotId_,
 } = require("../script.js");
@@ -113,6 +114,48 @@ describe("buildEmailSubject", () => {
   test("formats subject as NO GROUP for Mendez/Williams City Group on 12-17 when location is No Group", () => {
     const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "No Group", "Food", "Duty"];
     expect(buildEmailSubject_(row)).toBe("NO GROUP for Mendez/Williams City Group on 12-17");
+  });
+});
+
+describe("buildGroupMeMessage", () => {
+  beforeEach(() => {
+    global.Session = {
+      getScriptTimeZone: () => "UTC",
+    };
+
+    global.Utilities = {
+      formatDate: (date, tz, fmt) => {
+        if (!(date instanceof Date)) throw new Error("Expected Date");
+        if (tz !== "UTC") throw new Error("Expected UTC");
+        if (!fmt) throw new Error("Expected format");
+        if (fmt === "MM-dd") return "12-17";
+        return "UNEXPECTED_FORMAT";
+      },
+    };
+
+    global.PropertiesService = {
+      getScriptProperties: () => ({
+        getProperty: (key) => (key === "SHEET_ID" ? "SHEET123" : null),
+      }),
+    };
+  });
+
+  test("returns single-line NO GROUP message when location is No Group", () => {
+    const row = [new Date("2025-12-17T00:00:00Z"), "Desc", "No Group", "Food", "Duty"];
+    const message = buildGroupMeMessage_(row);
+    expect(message).toBe("NO GROUP for Mendez/Williams City Group on 12-17");
+  });
+
+  test("includes subject line, long date, details, and signup link", () => {
+    const row = [new Date("2025-12-25T00:00:00Z"), "Desc", "Loc", "Food", "Duty"];
+    const message = buildGroupMeMessage_(row);
+
+    expect(message).toContain("Reminder for Mendez/Williams City Group on 12-17");
+    expect(message).toContain("Description: Desc");
+    expect(message).toContain("Location: Loc");
+    expect(message).toContain("Food Theme: Food");
+    expect(message).toContain("Childcare Duty: Duty");
+    expect(message).toContain("https://docs.google.com/spreadsheets/d/SHEET123/edit?usp=sharing");
   });
 });
 

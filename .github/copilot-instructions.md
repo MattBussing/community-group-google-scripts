@@ -47,8 +47,8 @@ Goals:
 ### Public entry points (triggers)
 - `sendScheduledEmailFromSheet()`: production send; reads recipients from `Emails` sheet.
 - `testSendScheduledEmailFromSheet()`: test send; reads recipients from `TEST_EMAIL_RECIPIENTS`.
-- `postGroupMeReminderFromSheet()`: posts the same text as the email subject to GroupMe (requires `GROUPME_BOT_ID`).
-- `testPostGroupMeReminderFromSheet()`: posts to GroupMe using `TEST_GROUPME_BOT_ID`.
+- `postGroupMeReminderFromSheet()`: posts a plaintext version of the email details to GroupMe (no HTML; requires `GROUPME_BOT_ID`).
+- `testPostGroupMeReminderFromSheet()`: posts the same plaintext message to GroupMe using `TEST_GROUPME_BOT_ID`.
 
 ## GroupMe Bot setup
 - Create a bot at https://dev.groupme.com/bots (pick the target group).
@@ -56,10 +56,11 @@ Goals:
 - (Optional) Create a separate bot for testing and set `TEST_GROUPME_BOT_ID`.
 - Run `postGroupMeReminderFromSheet()` manually once to verify posting.
 - Use `testPostGroupMeReminderFromSheet()` to test without posting to the main group.
+- Note: GroupMe bots do not render HTML; messages must be plain text.
 
 ### Exports for tests
 - `script.js` conditionally exports helpers when `module.exports` is available.
-- When adding helpers that should be test-covered, export them in the same block.
+- When adding helpers that should be test-covered, export them in the same block (e.g., `buildGroupMeMessage_`).
 
 ### Logging
 - Prefer `Logger.log(...)` for Apps Script logs.

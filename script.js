@@ -192,6 +192,44 @@ function buildEmailSubject_(k) {
   return `Reminder for Mendez/Williams City Group on ${formattedDate}`;
 }
 
+/**
+ * Builds a plaintext GroupMe message for a schedule row (no HTML).
+ *
+ * - If Location is "No Group", returns the single-line NO GROUP message.
+ * - Otherwise includes a subject line, long-form date, details, and signup link.
+ *
+ * @param {Array<any>|null} k Row values from the Schedule sheet
+ * @returns {string} Plaintext message suitable for GroupMe
+ */
+function buildGroupMeMessage_(k) {
+  if (!k) return "Reminder for Mendez/Williams City Group";
+
+  if (isNoGroupRow_(k)) {
+    var noGroupDate = new Date(k[0]);
+    noGroupDate.setHours(12, 0, 0, 0);
+    var noGroupFormattedDate = Utilities.formatDate(noGroupDate, Session.getScriptTimeZone(), "MM-dd");
+    return `NO GROUP for Mendez/Williams City Group on ${noGroupFormattedDate}`;
+  }
+
+  var rowDate = new Date(k[0]);
+  rowDate.setHours(12, 0, 0, 0);
+  var shortDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "MM-dd");
+
+  var sheetId = getSheetId_();
+  var signupUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing`;
+
+  var lines = [
+    `Reminder for Mendez/Williams City Group on ${shortDate}`,
+    `Description: ${k[1]}`,
+    `Location: ${k[2]}`,
+    `Food Theme: ${k[3]}`,
+    `Childcare Duty: ${k[4]}`,
+    `Sign up: ${signupUrl}`,
+  ];
+
+  return lines.join("\n");
+}
+
 // -----------------------------------------------------------------------------
 // Recipient lookup
 // -----------------------------------------------------------------------------
@@ -385,7 +423,7 @@ function testSendScheduledEmailFromSheet() {
 function postGroupMeReminderFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
-  var message = buildEmailSubject_(nextRow);
+  var message = buildGroupMeMessage_(nextRow);
   var botId = getGroupMeBotId_();
   postGroupMeMessageWithBotId_(botId, message);
 }
@@ -400,7 +438,7 @@ function postGroupMeReminderFromSheet() {
 function testPostGroupMeReminderFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
-  var message = buildEmailSubject_(nextRow);
+  var message = buildGroupMeMessage_(nextRow);
   var botId = getTestGroupMeBotId_();
   postGroupMeMessageWithBotId_(botId, message);
 }
@@ -414,6 +452,7 @@ if (typeof module !== "undefined" && module.exports) {
     isNoGroupRow_,
     buildEmailBody_,
     buildEmailSubject_,
+    buildGroupMeMessage_,
     sendEmailToRecipients_,
     getGroupMeBotId_,
     getTestGroupMeBotId_,
