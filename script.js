@@ -271,7 +271,7 @@ function buildGroupMeMessage_(k) {
 
   var shortDate = getShortDate_(k[0]);
   if (isNoGroupRow_(k)) {
-    return `NO GROUP for Mendez/Williams City Group on ${shortDate}`; 
+    return `NO GROUP for Mendez/Williams City Group on ${shortDate}`;
   }
 
   var sheetId = getSheetId_();
