@@ -90,8 +90,60 @@ function getSheetData_(sheetName) {
  * @param {Array<Array<any>>} data 2D array of Schedule sheet values
  * @returns {Array<any>|null} First matching row, or null if none
  */
-function getNextUpcomingRow_(data) {
-  var today = new Date();
+function parseBaseDate_(optDate) {
+  if (!optDate) {
+    var now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now;
+  }
+
+  if (optDate instanceof Date) {
+    var d = new Date(optDate.getTime());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  var s = (optDate || "").toString().trim();
+  if (!s) {
+    var def = new Date();
+    def.setHours(0, 0, 0, 0);
+    return def;
+  }
+
+  var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    var month = parseInt(m[1], 10) - 1;
+    var day = parseInt(m[2], 10);
+    var year = parseInt(m[3], 10);
+    if (year < 100) year += 2000; // interpret 2-digit years as 20xx
+    var parsed = new Date(year, month, day);
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
+  }
+
+  var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    var y = parseInt(iso[1], 10);
+    var mth = parseInt(iso[2], 10) - 1;
+    var dy = parseInt(iso[3], 10);
+    var parsedIso = new Date(y, mth, dy);
+    parsedIso.setHours(0, 0, 0, 0);
+    return parsedIso;
+  }
+
+  var parsedGeneric = new Date(s);
+  if (!isNaN(parsedGeneric.getTime())) {
+    parsedGeneric.setHours(0, 0, 0, 0);
+    return parsedGeneric;
+  }
+
+  var fallback = new Date();
+  fallback.setHours(0, 0, 0, 0);
+  return fallback;
+}
+
+function getNextUpcomingRow_(data, optBaseDate) {
+  var today = parseBaseDate_(optBaseDate);
 
   var maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + 7); // 7 days from today
@@ -478,9 +530,9 @@ function sendScheduledEmailAndGroupMeFromSheet() {
  *
  * @returns {void}
  */
-function testSendScheduledEmailAndGroupMeFromSheet() {
+function testSendScheduledEmailAndGroupMeFromSheet(optBaseDate) {
   var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData);
+  var nextRow = getNextUpcomingRow_(scheduleData, optBaseDate);
 
   var emailBody = buildEmailBody_(nextRow);
   var subject = buildEmailSubject_(nextRow);
@@ -497,6 +549,7 @@ function testSendScheduledEmailAndGroupMeFromSheet() {
 // -----------------------------------------------------------------------------
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
+    parseBaseDate_,
     getNextUpcomingRow_,
     isNoGroupRow_,
     formatRowDate_,

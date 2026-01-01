@@ -52,7 +52,7 @@ Goals:
 
 New combined entry points:
 - `sendScheduledEmailAndGroupMeFromSheet()`: production combined send; emails via `Emails` sheet and posts to GroupMe using `GROUPME_BOT_ID`.
-- `testSendScheduledEmailAndGroupMeFromSheet()`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`.
+- `testSendScheduledEmailAndGroupMeFromSheet(optBaseDate)`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`. Accepts an optional base date to simulate "today". Examples: `12/15/25`, `1/30/2026`, or a `Date` object. Defaults to actual today when omitted.
 
 ## GroupMe Bot setup
 - Create a bot at https://dev.groupme.com/bots (pick the target group).

@@ -1,4 +1,5 @@
 const {
+  parseBaseDate_,
   getNextUpcomingRow_,
   buildEmailBody_,
   buildEmailSubject_,
@@ -35,6 +36,95 @@ describe("getNextUpcomingRow", () => {
     ];
 
     expect(getNextUpcomingRow_(data)).toBeNull();
+  });
+});
+
+describe("parseBaseDate_", () => {
+  test("defaults to today's midnight when undefined", () => {
+    const d = parseBaseDate_();
+    const now = new Date();
+    expect(d instanceof Date).toBe(true);
+    expect(d.getHours()).toBe(0);
+    expect(d.getMinutes()).toBe(0);
+    expect(d.getSeconds()).toBe(0);
+    expect(d.getFullYear()).toBe(now.getFullYear());
+    expect(d.getMonth()).toBe(now.getMonth());
+    expect(d.getDate()).toBe(now.getDate());
+  });
+
+  test("accepts Date and truncates to midnight", () => {
+    const src = new Date(2025, 0, 30, 15, 45, 59, 123);
+    const d = parseBaseDate_(src);
+    expect(d).not.toBe(src);
+    expect(d.getFullYear()).toBe(2025);
+    expect(d.getMonth()).toBe(0);
+    expect(d.getDate()).toBe(30);
+    expect(d.getHours()).toBe(0);
+    expect(d.getMinutes()).toBe(0);
+  });
+
+  test("parses mm/dd/yy", () => {
+    const d = parseBaseDate_("12/15/25");
+    expect(d.getFullYear()).toBe(2025);
+    expect(d.getMonth()).toBe(11); // December
+    expect(d.getDate()).toBe(15);
+    expect(d.getHours()).toBe(0);
+  });
+
+  test("parses mm/dd/yyyy", () => {
+    const d = parseBaseDate_("1/30/2025");
+    expect(d.getFullYear()).toBe(2025);
+    expect(d.getMonth()).toBe(0); // January
+    expect(d.getDate()).toBe(30);
+  });
+
+  test("parses generic date string", () => {
+    const d = parseBaseDate_("2025-02-01");
+    expect(d.getFullYear()).toBe(2025);
+    expect(d.getMonth()).toBe(1); // February
+    expect(d.getDate()).toBe(1);
+  });
+
+  test("falls back to today's midnight on invalid input", () => {
+    const d = parseBaseDate_("not-a-date");
+    const now = new Date();
+    expect(d.getFullYear()).toBe(now.getFullYear());
+    expect(d.getMonth()).toBe(now.getMonth());
+    expect(d.getDate()).toBe(now.getDate());
+    expect(d.getHours()).toBe(0);
+  });
+});
+
+describe("getNextUpcomingRow with base date", () => {
+  function mkRow(date, desc) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return [d, desc || "desc", "loc", "food", "cc"];
+  }
+
+  test("returns first row within window relative to base date", () => {
+    const base = parseBaseDate_("1/10/2025");
+    const data = [
+      ["Date", "Description", "Location", "Food", "Childcare"],
+      mkRow(new Date(2025, 0, 5), "past"),
+      mkRow(new Date(2025, 0, 12), "two days"),
+      mkRow(new Date(2025, 0, 18), "outside window"),
+      mkRow(new Date(2025, 0, 11), "one day later in sheet"),
+    ];
+
+    const row = getNextUpcomingRow_(data, base);
+    expect(row[1]).toBe("two days");
+  });
+
+  test("returns null when no rows within 7-day window from base", () => {
+    const base = parseBaseDate_("1/10/2025");
+    const data = [
+      ["Date", "Description"],
+      mkRow(new Date(2025, 0, 9), "past"),
+      mkRow(new Date(2025, 0, 19), "too late"),
+    ];
+
+    expect(getNextUpcomingRow_(data, base)).toBeNull();
   });
 });
 
