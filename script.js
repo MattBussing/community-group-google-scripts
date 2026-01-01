@@ -430,81 +430,6 @@ function postGroupMeMessageWithBotId_(botId, text) {
   });
 }
 
-// -----------------------------------------------------------------------------
-// Entry points
-// -----------------------------------------------------------------------------
-/**
- * Entry point: reads schedule + recipients from sheets and sends the email.
- *
- * Intended for time-based triggers.
- *
- * @returns {void}
- */
-function sendScheduledEmailFromSheet() {
-  performReminderSend_({ mode: "prod", sendEmail: true, sendGroupMe: false });
-}
-
-/**
- * Entry point: same as sendScheduledEmailFromSheet but uses `TEST_EMAIL_RECIPIENTS`.
- *
- * Useful for manually testing delivery without emailing the full group.
- *
- * @returns {void}
- */
-function testSendScheduledEmailFromSheet() {
-  performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: false });
-}
-
-/**
- * Entry point: posts the upcoming reminder message to GroupMe.
- *
- * The message content matches the email subject (including the NO GROUP case).
- * Intended for time-based triggers.
- *
- * Requires script property `GROUPME_BOT_ID`.
- *
- * @returns {void}
- */
-function postGroupMeReminderFromSheet() {
-  performReminderSend_({ mode: "prod", sendEmail: false, sendGroupMe: true });
-}
-
-/**
- * Entry point: posts the upcoming reminder message to GroupMe using TEST bot id.
- *
- * Requires script property `TEST_GROUPME_BOT_ID`.
- *
- * @returns {void}
- */
-function testPostGroupMeReminderFromSheet() {
-  performReminderSend_({ mode: "test", sendEmail: false, sendGroupMe: true });
-}
-
-/**
- * Entry point: sends the upcoming reminder via email and posts to GroupMe.
- *
- * Production variant: reads recipients from `Emails` sheet and uses `GROUPME_BOT_ID`.
- *
- * @returns {void}
- */
-function sendScheduledEmailAndGroupMeFromSheet() {
-  performReminderSend_({ mode: "prod", sendEmail: true, sendGroupMe: true });
-}
-
-/**
- * Entry point: test variant that sends email and posts to GroupMe test bot.
- *
- * Test recipients are loaded from `TEST_EMAIL_RECIPIENTS` and posting uses `TEST_GROUPME_BOT_ID`.
- *
- * @returns {void}
- */
-function testSendScheduledEmailAndGroupMeFromSheet(optBaseDate) {
-  performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: true, optBaseDate: optBaseDate });
-}
-
-// -----------------------------------------------------------------------------
-// DRY helpers
-// -----------------------------------------------------------------------------
 /**
  * Returns the Google Sheets sign-up URL based on the configured sheet id.
  *
@@ -570,6 +495,32 @@ function performReminderSend_(opts) {
 }
 
 // -----------------------------------------------------------------------------
+// Entry points
+// -----------------------------------------------------------------------------
+/**
+ * Entry point: sends the upcoming reminder via email and posts to GroupMe.
+ *
+ * Production variant: reads recipients from `Emails` sheet and uses `GROUPME_BOT_ID`.
+ *
+ * @returns {void}
+ */
+function sendNotif() {
+  performReminderSend_({ mode: "prod", sendEmail: true, sendGroupMe: true });
+}
+
+/**
+ * Entry point: test variant that sends email and posts to GroupMe test bot.
+ *
+ * Test recipients are loaded from `TEST_EMAIL_RECIPIENTS` and posting uses `TEST_GROUPME_BOT_ID`.
+ *
+ * @returns {void}
+ */
+function testSendNotif() {
+  optBaseDate = new Date(12/10/2025);
+  performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: true, optBaseDate: optBaseDate });
+}
+
+// -----------------------------------------------------------------------------
 // Node/test exports (no-op in Apps Script)
 // -----------------------------------------------------------------------------
 if (typeof module !== "undefined" && module.exports) {
@@ -589,10 +540,8 @@ if (typeof module !== "undefined" && module.exports) {
     getTestGroupMeBotId_,
     getGroupMeBotIdForMode_,
     postGroupMeMessageWithBotId_,
-    postGroupMeReminderFromSheet,
-    testPostGroupMeReminderFromSheet,
-    sendScheduledEmailAndGroupMeFromSheet,
-    testSendScheduledEmailAndGroupMeFromSheet,
+    sendNotif,
+    testSendNotif,
     getEmailRecipients_,
     getRecipientsForMode_,
     performReminderSend_,
