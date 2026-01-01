@@ -92,20 +92,20 @@ function getSheetData_(sheetName) {
 function parseBaseDate_(optDate) {
   if (!optDate) {
     var now = new Date();
-    now.setHours(0, 0, 0, 0);
+    now.setHours(12, 0, 0, 0);
     return now;
   }
 
   if (optDate instanceof Date) {
     var d = new Date(optDate.getTime());
-    d.setHours(0, 0, 0, 0);
+    d.setHours(12, 0, 0, 0);
     return d;
   }
 
   var s = (optDate || "").toString().trim();
   if (!s) {
     var def = new Date();
-    def.setHours(0, 0, 0, 0);
+    def.setHours(12, 0, 0, 0);
     return def;
   }
 
@@ -116,7 +116,7 @@ function parseBaseDate_(optDate) {
     var year = parseInt(m[3], 10);
     if (year < 100) year += 2000; // interpret 2-digit years as 20xx
     var parsed = new Date(year, month, day);
-    parsed.setHours(0, 0, 0, 0);
+    parsed.setHours(12, 0, 0, 0);
     return parsed;
   }
 
@@ -126,18 +126,18 @@ function parseBaseDate_(optDate) {
     var mth = parseInt(iso[2], 10) - 1;
     var dy = parseInt(iso[3], 10);
     var parsedIso = new Date(y, mth, dy);
-    parsedIso.setHours(0, 0, 0, 0);
+    parsedIso.setHours(12, 0, 0, 0);
     return parsedIso;
   }
 
   var parsedGeneric = new Date(s);
   if (!isNaN(parsedGeneric.getTime())) {
-    parsedGeneric.setHours(0, 0, 0, 0);
+    parsedGeneric.setHours(12, 0, 0, 0);
     return parsedGeneric;
   }
 
   var fallback = new Date();
-  fallback.setHours(0, 0, 0, 0);
+  fallback.setHours(12, 0, 0, 0);
   return fallback;
 }
 
