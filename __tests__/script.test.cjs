@@ -3,7 +3,6 @@ const {
   buildEmailBody_,
   buildEmailSubject_,
   sendEmailToRecipients_,
-  postGroupMeMessage_,
   postGroupMeMessageWithBotId_,
 } = require("../script.js");
 
@@ -159,44 +158,6 @@ describe("sendEmailToRecipients", () => {
   });
 });
 
-describe("postGroupMeMessage", () => {
-  beforeEach(() => {
-    global.Logger = {
-      log: jest.fn(),
-    };
-
-    global.PropertiesService = {
-      getScriptProperties: () => ({
-        getProperty: (key) => (key === "GROUPME_BOT_ID" ? "BOT123" : null),
-      }),
-    };
-
-    global.UrlFetchApp = {
-      fetch: jest.fn(),
-    };
-  });
-
-  test("does not post when message is empty", () => {
-    postGroupMeMessage_("");
-    expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
-    expect(global.Logger.log).toHaveBeenCalledWith("No GroupMe message text provided.");
-  });
-
-  test("posts to GroupMe bots endpoint with bot_id and text", () => {
-    postGroupMeMessage_("Hello GroupMe");
-
-    expect(global.UrlFetchApp.fetch).toHaveBeenCalledTimes(1);
-    const [url, options] = global.UrlFetchApp.fetch.mock.calls[0];
-
-    expect(url).toBe("https://api.groupme.com/v3/bots/post");
-    expect(options.method).toBe("post");
-    expect(options.contentType).toBe("application/json");
-
-    const parsed = JSON.parse(options.payload);
-    expect(parsed).toEqual({ bot_id: "BOT123", text: "Hello GroupMe" });
-  });
-});
-
 describe("postGroupMeMessageWithBotId", () => {
   beforeEach(() => {
     global.Logger = {
@@ -208,9 +169,29 @@ describe("postGroupMeMessageWithBotId", () => {
     };
   });
 
+  test("does not post when message is empty", () => {
+    postGroupMeMessageWithBotId_("BOT123", "");
+    expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
+    expect(global.Logger.log).toHaveBeenCalledWith("No GroupMe message text provided.");
+  });
+
   test("does not post when bot id is empty", () => {
     postGroupMeMessageWithBotId_("", "Hello");
     expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
     expect(global.Logger.log).toHaveBeenCalledWith("No GroupMe bot id provided.");
+  });
+
+  test("posts to GroupMe bots endpoint with bot_id and text", () => {
+    postGroupMeMessageWithBotId_("BOT123", "Hello GroupMe");
+
+    expect(global.UrlFetchApp.fetch).toHaveBeenCalledTimes(1);
+    const [url, options] = global.UrlFetchApp.fetch.mock.calls[0];
+
+    expect(url).toBe("https://api.groupme.com/v3/bots/post");
+    expect(options.method).toBe("post");
+    expect(options.contentType).toBe("application/json");
+
+    const parsed = JSON.parse(options.payload);
+    expect(parsed).toEqual({ bot_id: "BOT123", text: "Hello GroupMe" });
   });
 });
