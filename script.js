@@ -121,6 +121,32 @@ function isNoGroupRow_(k) {
   return location === "no group";
 }
 
+/**
+ * Formats a sheet date value using the script timezone after forcing midday.
+ *
+ * This centralizes the pattern used across the app to avoid timezone day-shift
+ * issues and reduce duplicated logic.
+ *
+ * @param {any} value Date-like value from the sheet (e.g., k[0])
+ * @param {string} pattern Utilities.formatDate pattern (e.g., "MM-dd")
+ * @returns {string} Formatted date string
+ */
+function formatRowDate_(value, pattern) {
+  var d = new Date(value);
+  d.setHours(12, 0, 0, 0); // midday
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), pattern);
+}
+
+/**
+ * Returns a short MM-dd formatted date for a sheet value, using midday.
+ *
+ * @param {any} value Date-like value from the sheet (e.g., k[0])
+ * @returns {string} Short date string in MM-dd
+ */
+function getShortDate_(value) {
+  return formatRowDate_(value, "MM-dd");
+}
+
 // -----------------------------------------------------------------------------
 // Email content
 // -----------------------------------------------------------------------------
@@ -137,17 +163,11 @@ function buildEmailBody_(k) {
   if (!k) return "No upcoming events found.";
 
   if (isNoGroupRow_(k)) {
-    var noGroupDate = new Date(k[0]);
-    noGroupDate.setHours(12, 0, 0, 0); // midday
-    var noGroupFormattedDate = Utilities.formatDate(noGroupDate, Session.getScriptTimeZone(), "MM-dd");
+    var noGroupFormattedDate = getShortDate_(k[0]);
     return `NO GROUP for Mendez/Williams City Group on ${noGroupFormattedDate}`;
   }
 
-  // Force midday to avoid timezone shifts.
-  var rowDate = new Date(k[0]);
-  rowDate.setHours(12, 0, 0, 0); // midday
-
-  var formattedDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "EEEE, MMMM d, yyyy");
+  var formattedDate = formatRowDate_(k[0], "EEEE, MMMM d, yyyy");
 
   var sheetId = getSheetId_();
   var signupUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing`;
@@ -177,18 +197,11 @@ function buildEmailBody_(k) {
 function buildEmailSubject_(k) {
   if (!k) return "Reminder for Mendez/Williams City Group";
 
+  var formattedDate = getShortDate_(k[0]);
   if (isNoGroupRow_(k)) {
-    var noGroupDate = new Date(k[0]);
-    noGroupDate.setHours(12, 0, 0, 0); // midday
-    var noGroupFormattedDate = Utilities.formatDate(noGroupDate, Session.getScriptTimeZone(), "MM-dd");
-    return `NO GROUP for Mendez/Williams City Group on ${noGroupFormattedDate}`;
+    return `NO GROUP for Mendez/Williams City Group on ${formattedDate}`;
   }
 
-  // Force midday to avoid timezone shifts.
-  var rowDate = new Date(k[0]);
-  rowDate.setHours(12, 0, 0, 0); // midday
-
-  var formattedDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "MM-dd");
   return `Reminder for Mendez/Williams City Group on ${formattedDate}`;
 }
 
@@ -204,16 +217,11 @@ function buildEmailSubject_(k) {
 function buildGroupMeMessage_(k) {
   if (!k) return "Reminder for Mendez/Williams City Group";
 
+  var shortDate = getShortDate_(k[0]);
   if (isNoGroupRow_(k)) {
-    var noGroupDate = new Date(k[0]);
-    noGroupDate.setHours(12, 0, 0, 0);
-    var noGroupFormattedDate = Utilities.formatDate(noGroupDate, Session.getScriptTimeZone(), "MM-dd");
-    return `NO GROUP for Mendez/Williams City Group on ${noGroupFormattedDate}`;
+    return `NO GROUP for Mendez/Williams City Group on ${shortDate}`; 
   }
 
-  var rowDate = new Date(k[0]);
-  rowDate.setHours(12, 0, 0, 0);
-  var shortDate = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "MM-dd");
 
   var sheetId = getSheetId_();
   var signupUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing`;
@@ -492,6 +500,8 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     getNextUpcomingRow_,
     isNoGroupRow_,
+    formatRowDate_,
+    getShortDate_,
     buildEmailBody_,
     buildEmailSubject_,
     buildGroupMeMessage_,
