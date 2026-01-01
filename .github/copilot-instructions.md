@@ -50,6 +50,10 @@ Goals:
 - `postGroupMeReminderFromSheet()`: posts a plaintext version of the email details to GroupMe (no HTML; requires `GROUPME_BOT_ID`).
 - `testPostGroupMeReminderFromSheet()`: posts the same plaintext message to GroupMe using `TEST_GROUPME_BOT_ID`.
 
+New combined entry points:
+- `sendScheduledEmailAndGroupMeFromSheet()`: production combined send; emails via `Emails` sheet and posts to GroupMe using `GROUPME_BOT_ID`.
+- `testSendScheduledEmailAndGroupMeFromSheet()`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`.
+
 ## GroupMe Bot setup
 - Create a bot at https://dev.groupme.com/bots (pick the target group).
 - Copy the bot's `bot_id` into Script Properties as `GROUPME_BOT_ID`.

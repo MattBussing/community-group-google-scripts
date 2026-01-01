@@ -443,6 +443,48 @@ function testPostGroupMeReminderFromSheet() {
   postGroupMeMessageWithBotId_(botId, message);
 }
 
+/**
+ * Entry point: sends the upcoming reminder via email and posts to GroupMe.
+ *
+ * Production variant: reads recipients from `Emails` sheet and uses `GROUPME_BOT_ID`.
+ *
+ * @returns {void}
+ */
+function sendScheduledEmailAndGroupMeFromSheet() {
+  var scheduleData = getSheetData_(ScheduleSheetName);
+  var nextRow = getNextUpcomingRow_(scheduleData);
+
+  var emailBody = buildEmailBody_(nextRow);
+  var subject = buildEmailSubject_(nextRow);
+  var recipients = getEmailRecipients_();
+  sendEmailToRecipients_(subject, emailBody, recipients);
+
+  var message = buildGroupMeMessage_(nextRow);
+  var botId = getGroupMeBotId_();
+  postGroupMeMessageWithBotId_(botId, message);
+}
+
+/**
+ * Entry point: test variant that sends email and posts to GroupMe test bot.
+ *
+ * Test recipients are loaded from `TEST_EMAIL_RECIPIENTS` and posting uses `TEST_GROUPME_BOT_ID`.
+ *
+ * @returns {void}
+ */
+function testSendScheduledEmailAndGroupMeFromSheet() {
+  var scheduleData = getSheetData_(ScheduleSheetName);
+  var nextRow = getNextUpcomingRow_(scheduleData);
+
+  var emailBody = buildEmailBody_(nextRow);
+  var subject = buildEmailSubject_(nextRow);
+  var recipients = getTestEmailRecipients_();
+  sendEmailToRecipients_(subject, emailBody, recipients);
+
+  var message = buildGroupMeMessage_(nextRow);
+  var botId = getTestGroupMeBotId_();
+  postGroupMeMessageWithBotId_(botId, message);
+}
+
 // -----------------------------------------------------------------------------
 // Node/test exports (no-op in Apps Script)
 // -----------------------------------------------------------------------------
@@ -459,6 +501,8 @@ if (typeof module !== "undefined" && module.exports) {
     postGroupMeMessageWithBotId_,
     postGroupMeReminderFromSheet,
     testPostGroupMeReminderFromSheet,
+    sendScheduledEmailAndGroupMeFromSheet,
+    testSendScheduledEmailAndGroupMeFromSheet,
     getEmailRecipients_,
     getSheetData_,
     getSheetId_
