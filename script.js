@@ -304,20 +304,6 @@ function sendEmailToRecipients_(subject, body, recipients) {
 }
 
 /**
- * Posts a message to a GroupMe group via the Bot API.
- *
- * Uses Script Property `GROUPME_BOT_ID`.
- * Endpoint: https://api.groupme.com/v3/bots/post
- *
- * @param {string} text Message text
- * @returns {void}
- */
-function postGroupMeMessage_(text) {
-  var botId = getGroupMeBotId_();
-  postGroupMeMessageWithBotId_(botId, text);
-}
-
-/**
  * Posts a message to a GroupMe group via the Bot API, using an explicit bot id.
  *
  * @param {string} botId GroupMe bot id
@@ -400,7 +386,8 @@ function postGroupMeReminderFromSheet() {
   var scheduleData = getSheetData_(ScheduleSheetName);
   var nextRow = getNextUpcomingRow_(scheduleData);
   var message = buildEmailSubject_(nextRow);
-  postGroupMeMessage_(message);
+  var botId = getGroupMeBotId_();
+  postGroupMeMessageWithBotId_(botId, message);
 }
 
 /**
@@ -430,7 +417,6 @@ if (typeof module !== "undefined" && module.exports) {
     sendEmailToRecipients_,
     getGroupMeBotId_,
     getTestGroupMeBotId_,
-    postGroupMeMessage_,
     postGroupMeMessageWithBotId_,
     postGroupMeReminderFromSheet,
     testPostGroupMeReminderFromSheet,
