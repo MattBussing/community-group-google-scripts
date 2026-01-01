@@ -220,9 +220,7 @@ function buildEmailBody_(k) {
   }
 
   var formattedDate = formatRowDate_(k[0], "EEEE, MMMM d, yyyy");
-
-  var sheetId = getSheetId_();
-  var signupUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing`;
+  var signupUrl = getSignupUrl_();
 
   var htmlBody = `
   <p><strong>Date:</strong> ${formattedDate}</p>
@@ -273,9 +271,7 @@ function buildGroupMeMessage_(k) {
   if (isNoGroupRow_(k)) {
     return `NO GROUP for Mendez/Williams City Group on ${shortDate}`;
   }
-
-  var sheetId = getSheetId_();
-  var signupUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing`;
+  var signupUrl = getSignupUrl_();
 
   var lines = [
     `Reminder for Mendez/Williams City Group on ${shortDate}`,
@@ -445,12 +441,7 @@ function postGroupMeMessageWithBotId_(botId, text) {
  * @returns {void}
  */
 function sendScheduledEmailFromSheet() {
-  var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData);
-  var emailBody = buildEmailBody_(nextRow);
-  var subject = buildEmailSubject_(nextRow);
-  var recipients = getEmailRecipients_();
-  sendEmailToRecipients_(subject, emailBody, recipients);
+  performReminderSend_({ mode: "prod", sendEmail: true, sendGroupMe: false });
 }
 
 /**
@@ -461,12 +452,7 @@ function sendScheduledEmailFromSheet() {
  * @returns {void}
  */
 function testSendScheduledEmailFromSheet() {
-  var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData);
-  var emailBody = buildEmailBody_(nextRow);
-  var subject = buildEmailSubject_(nextRow);
-  var recipients = getTestEmailRecipients_();
-  sendEmailToRecipients_(subject, emailBody, recipients);
+  performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: false });
 }
 
 /**
@@ -480,11 +466,7 @@ function testSendScheduledEmailFromSheet() {
  * @returns {void}
  */
 function postGroupMeReminderFromSheet() {
-  var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData);
-  var message = buildGroupMeMessage_(nextRow);
-  var botId = getGroupMeBotId_();
-  postGroupMeMessageWithBotId_(botId, message);
+  performReminderSend_({ mode: "prod", sendEmail: false, sendGroupMe: true });
 }
 
 /**
@@ -495,11 +477,7 @@ function postGroupMeReminderFromSheet() {
  * @returns {void}
  */
 function testPostGroupMeReminderFromSheet() {
-  var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData);
-  var message = buildGroupMeMessage_(nextRow);
-  var botId = getTestGroupMeBotId_();
-  postGroupMeMessageWithBotId_(botId, message);
+  performReminderSend_({ mode: "test", sendEmail: false, sendGroupMe: true });
 }
 
 /**
@@ -510,17 +488,7 @@ function testPostGroupMeReminderFromSheet() {
  * @returns {void}
  */
 function sendScheduledEmailAndGroupMeFromSheet() {
-  var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData);
-
-  var emailBody = buildEmailBody_(nextRow);
-  var subject = buildEmailSubject_(nextRow);
-  var recipients = getEmailRecipients_();
-  sendEmailToRecipients_(subject, emailBody, recipients);
-
-  var message = buildGroupMeMessage_(nextRow);
-  var botId = getGroupMeBotId_();
-  postGroupMeMessageWithBotId_(botId, message);
+  performReminderSend_({ mode: "prod", sendEmail: true, sendGroupMe: true });
 }
 
 /**
@@ -531,17 +499,74 @@ function sendScheduledEmailAndGroupMeFromSheet() {
  * @returns {void}
  */
 function testSendScheduledEmailAndGroupMeFromSheet(optBaseDate) {
+  performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: true, optBaseDate: optBaseDate });
+}
+
+// -----------------------------------------------------------------------------
+// DRY helpers
+// -----------------------------------------------------------------------------
+/**
+ * Returns the Google Sheets sign-up URL based on the configured sheet id.
+ *
+ * @returns {string} Sign-up URL
+ */
+function getSignupUrl_() {
+  var sheetId = getSheetId_();
+  return "https://docs.google.com/spreadsheets/d/" + sheetId + "/edit?usp=sharing";
+}
+
+/**
+ * Composes all reminder artifacts from a given schedule row.
+ *
+ * @param {Array<any>|null} row Schedule row
+ * @returns {{subject:string,emailBody:string,message:string,row:Array<any>|null}}
+ */
+function composeReminder_(row) {
+  return {
+    subject: buildEmailSubject_(row),
+    emailBody: buildEmailBody_(row),
+    message: buildGroupMeMessage_(row),
+    row: row
+  };
+}
+
+/**
+ * Returns recipients based on mode.
+ * @param {"prod"|"test"} mode
+ * @returns {string[]}
+ */
+function getRecipientsForMode_(mode) {
+  return mode === "prod" ? getEmailRecipients_() : getTestEmailRecipients_();
+}
+
+/**
+ * Returns GroupMe bot id based on mode.
+ * @param {"prod"|"test"} mode
+ * @returns {string}
+ */
+function getGroupMeBotIdForMode_(mode) {
+  return mode === "prod" ? getGroupMeBotId_() : getTestGroupMeBotId_();
+}
+
+/**
+ * Orchestrates sending email and/or GroupMe for the next upcoming row.
+ * @param {{mode:"prod"|"test", sendEmail:boolean, sendGroupMe:boolean, optBaseDate?:any}} opts
+ */
+function performReminderSend_(opts) {
+  var mode = (opts && opts.mode) || "prod";
   var scheduleData = getSheetData_(ScheduleSheetName);
-  var nextRow = getNextUpcomingRow_(scheduleData, optBaseDate);
+  var nextRow = getNextUpcomingRow_(scheduleData, opts && opts.optBaseDate);
+  var reminder = composeReminder_(nextRow);
 
-  var emailBody = buildEmailBody_(nextRow);
-  var subject = buildEmailSubject_(nextRow);
-  var recipients = getTestEmailRecipients_();
-  sendEmailToRecipients_(subject, emailBody, recipients);
+  if (opts && opts.sendEmail) {
+    var recipients = getRecipientsForMode_(mode);
+    sendEmailToRecipients_(reminder.subject, reminder.emailBody, recipients);
+  }
 
-  var message = buildGroupMeMessage_(nextRow);
-  var botId = getTestGroupMeBotId_();
-  postGroupMeMessageWithBotId_(botId, message);
+  if (opts && opts.sendGroupMe) {
+    var botId = getGroupMeBotIdForMode_(mode);
+    postGroupMeMessageWithBotId_(botId, reminder.message);
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -554,18 +579,23 @@ if (typeof module !== "undefined" && module.exports) {
     isNoGroupRow_,
     formatRowDate_,
     getShortDate_,
+    getSignupUrl_,
     buildEmailBody_,
     buildEmailSubject_,
     buildGroupMeMessage_,
+    composeReminder_,
     sendEmailToRecipients_,
     getGroupMeBotId_,
     getTestGroupMeBotId_,
+    getGroupMeBotIdForMode_,
     postGroupMeMessageWithBotId_,
     postGroupMeReminderFromSheet,
     testPostGroupMeReminderFromSheet,
     sendScheduledEmailAndGroupMeFromSheet,
     testSendScheduledEmailAndGroupMeFromSheet,
     getEmailRecipients_,
+    getRecipientsForMode_,
+    performReminderSend_,
     getSheetData_,
     getSheetId_
   };
