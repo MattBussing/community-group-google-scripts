@@ -222,7 +222,6 @@ function buildGroupMeMessage_(k) {
     return `NO GROUP for Mendez/Williams City Group on ${shortDate}`; 
   }
 
-
   var sheetId = getSheetId_();
   var signupUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?usp=sharing`;
 
