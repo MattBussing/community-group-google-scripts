@@ -17,7 +17,7 @@ Goals:
 - Uses Apps Script services: `SpreadsheetApp`, `PropertiesService`, `MailApp`, `Logger`, `Session`, `Utilities`.
 - **Script Properties** required:
   - `SHEET_ID`: Spreadsheet ID containing the `Schedule` and `Emails` tabs.
-  - `TEST_EMAIL_RECIPIENTS`: Comma-separated emails used by `testSendScheduledEmailFromSheet()`.
+  - `TEST_EMAIL_RECIPIENTS`: Comma-separated emails used by `testSendNotif()`.
   - `GROUPME_BOT_ID`: Bot id used to post messages via the GroupMe Bot API.
   - `TEST_GROUPME_BOT_ID`: Bot id used by the GroupMe test posting entry point.
 
@@ -45,21 +45,15 @@ Goals:
   - `NO GROUP for Mendez/Williams City Group on MM-dd`
 
 ### Public entry points (triggers)
-- `sendScheduledEmailFromSheet()`: production send; reads recipients from `Emails` sheet.
-- `testSendScheduledEmailFromSheet()`: test send; reads recipients from `TEST_EMAIL_RECIPIENTS`.
-- `postGroupMeReminderFromSheet()`: posts a plaintext version of the email details to GroupMe (no HTML; requires `GROUPME_BOT_ID`).
-- `testPostGroupMeReminderFromSheet()`: posts the same plaintext message to GroupMe using `TEST_GROUPME_BOT_ID`.
-
-New combined entry points:
-- `sendScheduledEmailAndGroupMeFromSheet()`: production combined send; emails via `Emails` sheet and posts to GroupMe using `GROUPME_BOT_ID`.
-- `testSendScheduledEmailAndGroupMeFromSheet(optBaseDate)`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`. Accepts an optional base date to simulate "today". Examples: `12/15/25`, `1/30/2026`, or a `Date` object. Defaults to actual today when omitted.
+- `sendNotif()`: production combined send; emails via `Emails` sheet and posts to GroupMe using `GROUPME_BOT_ID`.
+- `testSendNotif()`: test combined send; emails via `TEST_EMAIL_RECIPIENTS` and posts to GroupMe using `TEST_GROUPME_BOT_ID`. No arguments.
 
 ## GroupMe Bot setup
 - Create a bot at https://dev.groupme.com/bots (pick the target group).
 - Copy the bot's `bot_id` into Script Properties as `GROUPME_BOT_ID`.
 - (Optional) Create a separate bot for testing and set `TEST_GROUPME_BOT_ID`.
-- Run `postGroupMeReminderFromSheet()` manually once to verify posting.
-- Use `testPostGroupMeReminderFromSheet()` to test without posting to the main group.
+- Use `testSendNotif()` to test posting without sending to the main group (requires `TEST_GROUPME_BOT_ID`).
+- When ready, run `sendNotif()` manually once to verify production posting and email delivery.
 - Note: GroupMe bots do not render HTML; messages must be plain text.
 
 ### Exports for tests

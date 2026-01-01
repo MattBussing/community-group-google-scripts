@@ -516,7 +516,7 @@ function sendNotif() {
  * @returns {void}
  */
 function testSendNotif() {
-  optBaseDate = new Date(12/10/2025);
+  var optBaseDate = new Date(12/10/2025);
   performReminderSend_({ mode: "test", sendEmail: true, sendGroupMe: true, optBaseDate: optBaseDate });
 }
 
